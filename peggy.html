@@ -48,7 +48,7 @@ function rgbToHex(r, g, b) {
 
 <center>
 <hd1>Peggy</hr1><br><br>
-<canvas id="boardCanvas" width="270" height="280"></canvas><br>
+<canvas id="boardCanvas" width="300" height="280"></canvas><br>
 <button type="button" onclick="init()">Restart</button>
 <div id="status"></div>
 <div id="win"></div>
@@ -56,6 +56,9 @@ function rgbToHex(r, g, b) {
 <form>
 <input type="radio" name="board" id="board1"/>German - 45 hole<br>
 <input type="radio" name="board" id="board2" checked=”true”/>English - 33 hole<br>
+<input type="radio" name="board" id="board3"/>Asymmetrical - 39 hole<br>
+<input type="radio" name="board" id="board4"/>French - 37 hole<br>
+<input type="radio" name="board" id="board5"/>Diamond - 41 hole<br>
 </form>
 </center>
 <hd1>by Austin</hr1><br><br>
@@ -171,6 +174,96 @@ function init()
 				drawDot(2+i, 5+j, PEG_COLOUR);
 			}
 		pegCount = 32;
+
+	} else if (document.getElementById('board3').checked == true) {
+
+		// Asymmetrical
+		boardCanvas.width = 8*BOXWIDTH;
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(2+i, j, SQUARE_COLOUR);
+				drawDot(2+i, j, PEG_COLOUR);
+			}
+		for (var i=0; i < 9; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(i, 3+j, SQUARE_COLOUR);
+				if (j != 1 || i != 3)
+					drawDot(i, 3+j, PEG_COLOUR);
+			}
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 2; j++) {
+				drawSquare(2+i, 6+j, SQUARE_COLOUR);
+				drawDot(2+i, 6+j, PEG_COLOUR);
+			}
+		pegCount = 38;
+
+	} else if (document.getElementById('board4').checked == true) {
+
+		// French
+		boardCanvas.width = 7*BOXWIDTH;
+		for (var i=0; i < 3; i++) {
+			drawSquare(2+i, 0, SQUARE_COLOUR);
+			drawDot(2+i, 0, PEG_COLOUR);
+		}
+		for (var i=0; i < 5; i++) {
+			drawSquare(1+i, 1, SQUARE_COLOUR);
+			drawDot(1+i, 1, PEG_COLOUR);
+		}
+		for (var i=0; i < 7; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(i, 2+j, SQUARE_COLOUR);
+				if (j != 0 || i != 3)
+					drawDot(i, 2+j, PEG_COLOUR);
+			}
+		for (var i=0; i < 5; i++) {
+			drawSquare(1+i, 5, SQUARE_COLOUR);
+			drawDot(1+i, 5, PEG_COLOUR);
+		}
+		for (var i=0; i < 3; i++) {
+			drawSquare(2+i, 6, SQUARE_COLOUR);
+			drawDot(2+i, 6, PEG_COLOUR);
+		}
+		pegCount = 36;
+
+	} else if (document.getElementById('board5').checked == true) {
+
+		// Diamond
+		boardCanvas.width = 9*BOXWIDTH;
+
+		drawSquare(4, 0, SQUARE_COLOUR);
+		drawDot(4, 0, PEG_COLOUR);
+		for (var i=0; i < 3; i++) {
+			drawSquare(3+i, 1, SQUARE_COLOUR);
+			drawDot(3+i, 1, PEG_COLOUR);
+		}
+		for (var i=0; i < 5; i++) {
+			drawSquare(2+i, 2, SQUARE_COLOUR);
+			drawDot(2+i, 2, PEG_COLOUR);
+		}
+		for (var i=0; i < 7; i++) {
+			drawSquare(1+i, 3, SQUARE_COLOUR);
+			drawDot(1+i, 3, PEG_COLOUR);
+		}
+		for (var i=0; i < 9; i++) {
+			drawSquare(0+i, 4, SQUARE_COLOUR);
+			if (i != 4)
+				drawDot(0+i, 4, PEG_COLOUR);
+		}
+		for (var i=0; i < 7; i++) {
+			drawSquare(1+i, 5, SQUARE_COLOUR);
+			drawDot(1+i, 5, PEG_COLOUR);
+		}
+		for (var i=0; i < 5; i++) {
+			drawSquare(2+i, 6, SQUARE_COLOUR);
+			drawDot(2+i, 6, PEG_COLOUR);
+		}
+		for (var i=0; i < 3; i++) {
+			drawSquare(3+i, 7, SQUARE_COLOUR);
+			drawDot(3+i, 7, PEG_COLOUR);
+		}
+		drawSquare(4, 8, SQUARE_COLOUR);
+		drawDot(4, 8, PEG_COLOUR);
+		pegCount = 40;
 
 	}
 }
