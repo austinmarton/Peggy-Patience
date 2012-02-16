@@ -1,1 +1,387 @@
-Test
+<!DOCTYPE HTML>
+<html>
+
+<!-- 
+
+ This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    For a copy of the GNU General Public License see
+    <http://www.gnu.org/licenses/>.
+
+-->
+
+<head>
+<script type="text/javascript" src="http://jqueryjs.googlecode.com/files/jquery-1.2.6.min.js"></script>
+
+<script type="text/javascript">
+
+function findPos(obj) {
+	var curleft = 0, curtop = 0;
+	if (obj.offsetParent) {
+		do {
+			curleft += obj.offsetLeft;
+			curtop += obj.offsetTop;
+		} while (obj = obj.offsetParent);
+		return { x: curleft, y: curtop };
+	}
+	return undefined;
+}
+
+function rgbToHex(r, g, b) {
+	if (r > 255 || g > 255 || b > 255)
+		throw "Invalid color";
+	return ((r << 16) | (g << 8) | b).toString(16);
+}
+
+</script>
+</head>
+
+<body>
+
+<center>
+<hd1>Peggy</hr1><br><br>
+<canvas id="boardCanvas" width="300" height="280"></canvas><br>
+<button type="button" onclick="init()">Restart</button>
+<div id="status"></div>
+<div id="win"></div>
+<br>
+<form>
+<input type="radio" name="board" id="board1"/>German - 45 hole<br>
+<input type="radio" name="board" id="board2" checked=”true”/>English - 33 hole<br>
+<input type="radio" name="board" id="board3"/>Asymmetrical - 39 hole<br>
+<input type="radio" name="board" id="board4"/>French - 37 hole<br>
+<input type="radio" name="board" id="board5"/>Diamond - 41 hole<br>
+</form>
+</center>
+<hd1>by Austin</hr1><br><br>
+
+<script>
+var boardCanvas = document.getElementById('boardCanvas');
+var context = boardCanvas.getContext('2d');
+
+/* 
+ * Definitions
+ */
+
+var BOXWIDTH = 30;
+var BOARDER = 2;
+var SQUARE_COLOUR = "#ff0000";
+var SQUARE_SEL_COLOUR = "#0000ff";
+var PEG_COLOUR = "#ffff0f";
+
+var red = true;
+var selectedX = -1;
+var selectedY = -1;
+
+/*
+ * Helper functions
+ */
+
+function drawSquare(x, y, colour)
+{
+	context.fillStyle = "rgb(0,0,0)";
+	context.fillRect(x*BOXWIDTH, y*BOXWIDTH, BOXWIDTH, BOXWIDTH);
+	context.fillStyle = colour;
+	context.fillRect(x*BOXWIDTH+BOARDER, y*BOXWIDTH+BOARDER, BOXWIDTH-2*BOARDER, BOXWIDTH-2*BOARDER);
+}
+
+function drawDot(x, y, colour)
+{
+	context.fillStyle=colour;
+	context.beginPath();
+	context.arc(x*BOXWIDTH+(BOXWIDTH/2),y*BOXWIDTH+(BOXWIDTH/2),BOXWIDTH*0.4,0,Math.PI*2,true);
+	context.closePath();
+	context.fill();
+}
+
+function hasPeg(x, y, c)
+{
+	var p = c.getImageData(x*BOXWIDTH+BOXWIDTH/2, y*BOXWIDTH+BOXWIDTH/2, 1, 1).data;
+	var hexPeg = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6);
+
+	if (hexPeg == PEG_COLOUR)
+		return true;
+	else
+		return false;
+}
+
+function isSelected(x, y, c)
+{
+	var pB = c.getImageData(x*BOXWIDTH+BOARDER, y*BOXWIDTH+BOARDER, 1, 1).data;
+	var hexBorder = "#" + ("000000" + rgbToHex(pB[0], pB[1], pB[2])).slice(-6);
+
+	if (hexBorder == SQUARE_SEL_COLOUR)
+		return true;
+	else
+		return false;
+}
+
+/*
+ * Board setup
+ */
+
+var counterCount;
+function init()
+{
+	if (document.getElementById('board1').checked == true) {
+
+		// German
+		boardCanvas.width = 9*BOXWIDTH;
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(3+i, j, SQUARE_COLOUR);
+				drawDot(3+i, j, PEG_COLOUR);
+			}
+		for (var i=0; i < 9; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(i, 3+j, SQUARE_COLOUR);
+				if (j != 1 || i != 4)
+					drawDot(i, 3+j, PEG_COLOUR);
+			}
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(3+i, 6+j, SQUARE_COLOUR);
+				drawDot(3+i, 6+j, PEG_COLOUR);
+			}
+		pegCount = 44;
+
+	} else if (document.getElementById('board2').checked == true) {
+
+		// English
+		boardCanvas.width = 7*BOXWIDTH;
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 2; j++) {
+				drawSquare(2+i, j, SQUARE_COLOUR);
+				drawDot(2+i, j, PEG_COLOUR);
+			}
+		for (var i=0; i < 7; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(i, 2+j, SQUARE_COLOUR);
+				if (j != 1 || i != 3)
+					drawDot(i, 2+j, PEG_COLOUR);
+			}
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 2; j++) {
+				drawSquare(2+i, 5+j, SQUARE_COLOUR);
+				drawDot(2+i, 5+j, PEG_COLOUR);
+			}
+		pegCount = 32;
+
+	} else if (document.getElementById('board3').checked == true) {
+
+		// Asymmetrical
+		boardCanvas.width = 8*BOXWIDTH;
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(2+i, j, SQUARE_COLOUR);
+				drawDot(2+i, j, PEG_COLOUR);
+			}
+		for (var i=0; i < 9; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(i, 3+j, SQUARE_COLOUR);
+				if (j != 1 || i != 3)
+					drawDot(i, 3+j, PEG_COLOUR);
+			}
+		for (var i=0; i < 3; i++)
+			for (var j=0; j < 2; j++) {
+				drawSquare(2+i, 6+j, SQUARE_COLOUR);
+				drawDot(2+i, 6+j, PEG_COLOUR);
+			}
+		pegCount = 38;
+
+	} else if (document.getElementById('board4').checked == true) {
+
+		// French
+		boardCanvas.width = 7*BOXWIDTH;
+		for (var i=0; i < 3; i++) {
+			drawSquare(2+i, 0, SQUARE_COLOUR);
+			drawDot(2+i, 0, PEG_COLOUR);
+		}
+		for (var i=0; i < 5; i++) {
+			drawSquare(1+i, 1, SQUARE_COLOUR);
+			drawDot(1+i, 1, PEG_COLOUR);
+		}
+		for (var i=0; i < 7; i++)
+			for (var j=0; j < 3; j++) {
+				drawSquare(i, 2+j, SQUARE_COLOUR);
+				if (j != 0 || i != 3)
+					drawDot(i, 2+j, PEG_COLOUR);
+			}
+		for (var i=0; i < 5; i++) {
+			drawSquare(1+i, 5, SQUARE_COLOUR);
+			drawDot(1+i, 5, PEG_COLOUR);
+		}
+		for (var i=0; i < 3; i++) {
+			drawSquare(2+i, 6, SQUARE_COLOUR);
+			drawDot(2+i, 6, PEG_COLOUR);
+		}
+		pegCount = 36;
+
+	} else if (document.getElementById('board5').checked == true) {
+
+		// Diamond
+		boardCanvas.width = 9*BOXWIDTH;
+
+		drawSquare(4, 0, SQUARE_COLOUR);
+		drawDot(4, 0, PEG_COLOUR);
+		for (var i=0; i < 3; i++) {
+			drawSquare(3+i, 1, SQUARE_COLOUR);
+			drawDot(3+i, 1, PEG_COLOUR);
+		}
+		for (var i=0; i < 5; i++) {
+			drawSquare(2+i, 2, SQUARE_COLOUR);
+			drawDot(2+i, 2, PEG_COLOUR);
+		}
+		for (var i=0; i < 7; i++) {
+			drawSquare(1+i, 3, SQUARE_COLOUR);
+			drawDot(1+i, 3, PEG_COLOUR);
+		}
+		for (var i=0; i < 9; i++) {
+			drawSquare(0+i, 4, SQUARE_COLOUR);
+			if (i != 4)
+				drawDot(0+i, 4, PEG_COLOUR);
+		}
+		for (var i=0; i < 7; i++) {
+			drawSquare(1+i, 5, SQUARE_COLOUR);
+			drawDot(1+i, 5, PEG_COLOUR);
+		}
+		for (var i=0; i < 5; i++) {
+			drawSquare(2+i, 6, SQUARE_COLOUR);
+			drawDot(2+i, 6, PEG_COLOUR);
+		}
+		for (var i=0; i < 3; i++) {
+			drawSquare(3+i, 7, SQUARE_COLOUR);
+			drawDot(3+i, 7, PEG_COLOUR);
+		}
+		drawSquare(4, 8, SQUARE_COLOUR);
+		drawDot(4, 8, PEG_COLOUR);
+		pegCount = 40;
+
+	}
+}
+
+/*
+ * Evaluate move
+ */
+
+$("#boardCanvas").click(function(e){
+
+	var pos = findPos(this);
+	var c = this.getContext('2d');
+
+	var x = e.pageX - pos.x;
+	var y = e.pageY - pos.y;
+	var coord = "x=" + x + ", y=" + y;
+
+	var xStart = Math.floor((e.pageX-$("#boardCanvas").offset().left) / BOXWIDTH);
+	var yStart = Math.floor((e.pageY-$("#boardCanvas").offset().top) / BOXWIDTH);
+	var coord_rnd = "x=" + xStart + ", y=" + yStart;
+
+	var p = c.getImageData(xStart*BOXWIDTH+BOXWIDTH/2, yStart*BOXWIDTH+BOXWIDTH/2, 1, 1).data;
+	var pB = c.getImageData(xStart*BOXWIDTH+BOARDER, yStart*BOXWIDTH+BOARDER, 1, 1).data;
+
+	var hexPeg = "#" + ("000000" + rgbToHex(p[0], p[1], p[2])).slice(-6);
+	var hexBorder = "#" + ("000000" + rgbToHex(pB[0], pB[1], pB[2])).slice(-6);
+
+	var peg;
+	if (hexPeg == PEG_COLOUR) {
+		peg = true;
+	} else {
+		peg = false;
+	}
+
+	/* square is selected, unselect it */
+	if (hexBorder == SQUARE_SEL_COLOUR) {
+		selectedX = -1;
+		selectedY = -1;
+		drawSquare(xStart, yStart, SQUARE_COLOUR);		
+		if (peg)
+			drawDot(xStart, yStart, PEG_COLOUR);
+
+	/* square is unselected */
+	} else if (hexBorder == SQUARE_COLOUR) {
+
+		/* no others selected so select */
+		if (selectedX == -1 && selectedY == -1) {
+			/* check we have a peg to move */
+			var srcPeg = hasPeg(xStart, yStart, c);
+			if (!srcPeg)
+				return;
+			selectedX = xStart;
+			selectedY = yStart;
+			drawSquare(xStart, yStart, SQUARE_SEL_COLOUR);
+			if (peg)
+				drawDot(xStart, yStart, PEG_COLOUR);
+
+		/* other square selected - try move */
+		} else {
+			var xDiff = xStart-selectedX;
+			var yDiff = yStart-selectedY;
+
+			/* check we can go there */
+			if (xDiff > 2 || xDiff < -2 || yDiff > 2 || yDiff < -2)
+				return;
+			if (xDiff != 0 && yDiff != 0)
+				return;
+
+			/* do move! */
+			var destPeg = hasPeg(xStart, yStart, c);
+			if (!destPeg) {
+
+				// jumped peg
+				var xOff = 0;
+				var yOff = 0;
+
+				if (xStart-selectedX > 0)
+					xOff = 1;
+				else if (xStart-selectedX < 0)
+					xOff = -1;
+				else {
+					xOff = 0;
+					if (yStart-selectedY > 0)
+						yOff = 1;
+					else if (yStart-selectedY < 0)
+						yOff = -1;
+					else
+						return;
+				}
+
+				/* check we have a peg to jump */
+				var midPeg = hasPeg(selectedX+xOff, selectedY+yOff, c);
+				if (!midPeg)
+					return;
+
+				// jumped peg
+				drawSquare(selectedX+xOff, selectedY+yOff, SQUARE_COLOUR);
+				// peg dest
+				drawDot(xStart, yStart, PEG_COLOUR); 
+				// peg src
+				drawSquare(selectedX, selectedY, SQUARE_COLOUR); 
+
+				pegCount--;
+				selectedX = -1;
+				selectedY = -1;
+			}
+		}
+	}
+
+	/* Check if they have won */
+	if (pegCount == 1) {
+		$('#win').html("YOU WIN!");
+		//init();
+	}
+
+});
+
+</script>
+
+</body>
+</html>
